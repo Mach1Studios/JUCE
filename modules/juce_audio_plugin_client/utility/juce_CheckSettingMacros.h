@@ -91,3 +91,7 @@
  #undef JucePlugin_Build_AAX
  #define JucePlugin_Build_AAX 0
 #endif
+
+#if AvidPatch_Build
+#define AvidPatch_MacrosHeader "AvidPatchMacros.h"
+#endif

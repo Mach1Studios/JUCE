@@ -23,4 +23,10 @@
   ==============================================================================
 */
 
-#include "AAX/juce_AAX_Wrapper.cpp"
+#if AvidPatch_Build
+  #define AvidPatch_MacrosHeader "AvidPatchMacros.h"
+  // Note: In this case juce_AAX_Wrapper.cpp is compiled
+  // into the plug-in via AvidPatchJuceAAXWrapper.cpp
+#else
+  #include "AAX/juce_AAX_Wrapper.cpp"
+#endif

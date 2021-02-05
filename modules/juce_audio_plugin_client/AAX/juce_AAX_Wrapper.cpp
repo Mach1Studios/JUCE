@@ -109,6 +109,14 @@ JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfour-char-constants")
 
 #include "juce_AAX_Modifier_Injector.h"
 
+#if defined ( AvidPatch_MacrosHeader )
+  #include AvidPatch_MacrosHeader
+#endif
+
+#if defined ( AvidPatch_JuceAAXWrapperPreparation )
+  #include AvidPatch_JuceAAXWrapperPreparation
+#endif
+
 using namespace juce;
 
 #ifndef JucePlugin_AAX_Chunk_Identifier
@@ -730,8 +738,11 @@ namespace AAXClasses
                     return false;
                 };
             }
-
-            return new JuceAAX_Processor();
+		   #if defined ( AvidPatch_JuceAAXDSP_CreateEffectParameters )
+			return AvidPatch_JuceAAXDSP_CreateEffectParameters;
+		   #else
+            return new JuceAAX_Processor{};
+		   #endif
         }
 
         AAX_Result Uninitialize() override
@@ -2142,7 +2153,16 @@ namespace AAXClasses
 
         check (desc.AddPrivateData (JUCEAlgorithmIDs::pluginInstance, sizeof (PluginInstanceInfo)));
         check (desc.AddPrivateData (JUCEAlgorithmIDs::preparedFlag, sizeof (int32_t)));
-
+		
+       #if defined ( AvidPatch_JuceAAXDSP_AddCustomFields )
+		// custom fields start just after the final registered field; see AvidPatchAlgTIData.h
+		{
+			auto const firstCustomFieldIndex = 1+JUCEAlgorithmIDs::sideChainBuffers;
+			static_assert(firstCustomFieldIndex == sizeof(JUCEAlgorithmContext)/sizeof(void*), "The algorithm context starting field index passed to AvidPatch_JuceAAXDSP_AddCustomFields is incorrect");
+			AvidPatch_JuceAAXDSP_AddCustomFields(desc, firstCustomFieldIndex);
+		}
+       #endif
+		
         if (numMeters > 0)
         {
             HeapBlock<AAX_CTypeID> meterIDs (static_cast<size_t> (numMeters));
@@ -2243,8 +2263,16 @@ namespace AAXClasses
                 check (desc.AddAuxOutputStem (0, static_cast<int32_t> (auxFormat), name.toRawUTF8()));
             }
         }
-
+		
+       #if AvidPatch_JuceAAXDSP_UseDSPProcessProcForNative
+		check (desc.AddProcessProc_Native (AvidPatch_JuceAAXDSP_AlgCallback, properties));
+       #else
         check (desc.AddProcessProc_Native (algorithmProcessCallback, properties));
+       #endif
+		
+       #if defined ( AvidPatch_JuceAAXDSP_AddProcessProc )
+		AvidPatch_JuceAAXDSP_AddProcessProc(desc, properties);
+       #endif
     }
 
     static bool hostSupportsStemFormat (AAX_EStemFormat stemFormat, const AAX_IFeatureInfo* featureInfo)

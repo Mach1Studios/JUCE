@@ -24,4 +24,9 @@
 */
 
 #define JUCE_INCLUDED_AAX_IN_MM 1
-#include "AAX/juce_AAX_Wrapper.cpp"
+
+#if AvidPatch_Build
+  #include "AvidPatchJuceAAXWrapper.cpp"
+#else
+  #include "AAX/juce_AAX_Wrapper.cpp"
+#endif
